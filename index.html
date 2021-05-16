@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>OpenCV.js - object detection sample</title>
+<script src="utils.js" type="text/javascript"></script>
+
+<script
+  src="https://code.jquery.com/jquery-3.6.0.min.js"
+  integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+  crossorigin="anonymous"></script>
+
+<script src="jquery.canvasjs.min.js" type="text/javascript"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js" integrity="sha384-+YQ4JLhjyBLPDQt//I+STsc9iw4uQqACwlvpslubQzn4u2UU2UFM80nGisd026JF" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-Piv4xVNRyMGpqkS2by6br4gNJ7DXjqk09RmUpJ8jgGtD7zP9yug3goQfGII0yAns" crossorigin="anonymous"></script>
+
+</head>
+<body>
+<h2>How to count objects inside a given picture using OpenCV</h2>
+<div class="container">
+	<div class="row">
+		<div class="col-sm">
+			<h3>Principle</h3>
+			<p>The main goal of this code sample is to demonstrate that it is possible to realise quite accurately and only by exploiting the intrinsic properties of a picture to isolate and to count shapes
+			inside of it. It relies on the <a href="https://opencv.org/" target="_blank">OpenCV</a> library.</p>
+			<p>Keep in mind that this sample will perform quite well in mainly two environments:
+				<ol>
+					<li>the background of the picture is homogeneous</li>
+					<li>the color of the objects that need to be counted is homogeneous</li>
+				</ol>
+			</p>
+		</div>
+		<div class="col-sm">
+			<p>As a matter of fact, this code performs the following operations
+				<ol> 
+					<li><b>Image blur</b> : to attenuate colorimetric variations inside the image</li>
+					<li><b>First threshold operation</b> : to perform a first separation between the objects that need to be counted and the background</li>
+					<li><b>Second threshold operation</b> : to remove artefacts from the first binarisation and focus on the objects required</li>
+					<li><b>Erosion</b>: to remove from the image objects underneath a certain size</li>
+					<li><b>Contour detection</b>: final operation to identify and count shapes within the image</li>
+				</ol>
+			</p>
+			<p>
+				Once your sample image is loaded, you can test the correct settings depending on
+				<ol>
+				<li>the color of the objects you want to count and the color of the background</li>
+				<li>the matrix size used to perform the blur</li>
+				<li>the threshold parameters</li>
+				</ol>
+			</p>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-sm">
+			<p class="alert" id="errorMessage"></p>
+		</div>
+	</div>
+
+	<div class="row">
+		<h3> Parameters </h3>
+		<div class="col-sm">
+			<input type="file" id="fileInput" name="file" accept="image/*" /><br/>
+			<label>T1 bRay</label><input id="T1bRay" type="number" value="11"/><br/>
+			<label>T1 vMin</label><input id="T1vMin" type="number" value="135"/><br/>
+			<label>T1 vMax</label><input id="T1vMax" type="number" value="255"/><br/>
+		</div>
+		<div class="col-sm">
+			<label>T2 erosion</label><input id="T2erode" type="number" value="10"/><br/>
+			<label>T2 vMin</label><input id="T2vMin" type="number" value="180"/><br/>
+			<label>T2 vMax</label><input id="T2vMax" type="number" value="255"/><br/>
+
+			<button id="tryIt" disabled> Lauch recognition </button><br/><br/>
+			<!--<label>tMethod</label><input id="bRay" type="number" /><br/>-->
+			
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-sm">
+			<canvas id="canvasInput"></canvas><br/>
+		</div>
+		<div class="col-sm">
+			<div id="chartContainer"></div><br/>
+		</div>
+	</div>
+</div>
+
+<h2>Results</h2>
+<div class="container">
+<div class="row">
+	<div class="col-sm">
+		<canvas id="step1"></canvas>
+	</div>
+	<div class="col-sm">
+		<div id="histo1"></div>
+	</div>
+</div>
+<div class="row">
+	<div class="col-sm">
+		 <canvas id="step2"></canvas>
+	</div>
+	<div class="col-sm">
+		<div id="histo2"></div>
+	</div>
+</div>
+<div class="row">
+	<div class="col-sm">
+		 <canvas id="step3"></canvas>
+	</div>
+	<div class="col-sm">
+		<div id="histo3"></div>
+	</div>
+</div>
+</div>
+
+<script type="text/javascript">
+
+/**
+	Calculate histogram of picture and draws it using canva.js
+*/
+function calcHistogram(step,chartDiv){
+	//Load img histogram
+	let src = cv.imread(step);
+	cv.cvtColor(src, src, cv.COLOR_RGBA2GRAY, 0);
+	let srcVec = new cv.MatVector();
+	srcVec.push_back(src);
+	let accumulate = false;
+	let channels = [0];
+	let histSize = [256];
+	let ranges = [0, 255];
+	let hist = new cv.Mat();
+	let mask = new cv.Mat();
+	let color = new cv.Scalar(255, 255, 255);
+	let scale = 2;
+	// You can try more different parameters
+	cv.calcHist(srcVec, channels, mask, hist, histSize, ranges, accumulate);
+	let result = cv.minMaxLoc(hist, mask);
+	let max = result.maxVal;
+	let dst = new cv.Mat.zeros(src.rows, histSize[0] * scale,cv.CV_8UC3);
+	
+	// draw histogram
+	var dps = [];
+	var chart = new CanvasJS.Chart(chartDiv, {
+		exportEnabled: true,
+		title :{
+			text: "Courbe colorimetrique"
+		},
+		data: [{
+			type: "spline",
+			markerSize: 0,
+			dataPoints: dps 
+		}]
+	});
+	for (let i = 0; i < histSize[0]; i++) {
+		let binVal = hist.data32F[i] * src.rows / max;
+		//let point1 = new cv.Point(i * scale, src.rows - 1);
+		//let point2 = new cv.Point((i + 1) * scale - 1, src.rows - binVal);
+		//cv.rectangle(dst, point1, point2, color, cv.FILLED);
+		dps.push({
+			x: i,
+			y: binVal
+		});
+	}
+	chart.render();
+	//cv.imshow('histo', dst);
+	src.delete(); dst.delete(); srcVec.delete(); mask.delete(); hist.delete();
+}
+let utils = new Utils('errorMessage');
+
+utils.loadImageToCanvas('sample3.jpg', 'canvasInput');
+utils.addFileInputHandler('fileInput', 'canvasInput');
+
+let tryIt = document.getElementById('tryIt');
+tryIt.addEventListener('click', () => {
+	calcHistogram('canvasInput','chartContainer');
+	
+	let src = cv.imread('canvasInput');
+	let dst = new cv.Mat();
+	let dst2 = new cv.Mat();
+	let E = cv.Mat.ones(parseInt($("#T2erode").val()), parseInt($("#T2erode").val()), cv.CV_8U);
+	let D = cv.Mat.ones(6, 6, cv.CV_8U);
+	let contours = new cv.MatVector();
+	let hierarchy = new cv.Mat();
+	let disp = new cv.Mat();
+	let dsize = new cv.Size($(window).width()*0.6/2, $(window).width()*0.6/2);
+
+	let anchor = new cv.Point(-1, -1);
+	
+	cv.resize(src,disp,dsize,0,0,cv.INTER_AREA);
+	cv.imshow('canvasInput', disp);
+	cv.cvtColor(src, dst2, cv.COLOR_RGBA2GRAY);
+
+	//1-TH-FirstStep
+	//Blurr image 
+	cv.medianBlur(src,src,parseInt($("#T1bRay").val()));
+	cv.cvtColor(src, dst2, cv.COLOR_RGBA2GRAY);
+	//1-Binarize
+	cv.threshold(src, dst, parseInt($("#T1vMin").val()), parseInt($("#T1vMax").val()), cv.THRESH_BINARY_INV);
+	//Blurr image 
+	cv.medianBlur(dst,dst,parseInt($("#T1bRay").val()));
+	//To levels of gray
+	cv.cvtColor(dst, dst, cv.COLOR_RGBA2GRAY);
+	
+	cv.resize(dst,disp,dsize,0,0,cv.INTER_AREA);
+	cv.imshow('step1', disp);
+	calcHistogram('step1','histo1');
+
+	//1.2-Binarize2
+	cv.threshold(dst, dst, parseInt($("#T2vMin").val()), parseInt($("#T2vMax").val()), cv.THRESH_TOZERO_INV);
+	//ERODE
+	cv.erode(dst, dst, E, anchor, 1, cv.BORDER_CONSTANT, cv.morphologyDefaultBorderValue());
+
+	cv.resize(dst,disp,dsize,0,0,cv.INTER_AREA);
+	cv.imshow('step2', disp);
+	calcHistogram('step2','histo2');
+
+	//2-CONTOURS
+	// You can try more different parameters
+	cv.findContours(dst, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
+	// draw contours with random Scalar
+	for (let i = 0; i < contours.size(); ++i) {
+		let color = new cv.Scalar(Math.round(Math.random() * 255), Math.round(Math.random() * 255),Math.round(Math.random() * 255));
+		cv.drawContours(dst2, contours, i, color, 3, cv.LINE_8, hierarchy, 100);
+	}
+	cv.resize(dst2,disp,dsize,0,0,cv.INTER_AREA);
+	cv.imshow('step3', disp);
+	calcHistogram('step3','histo3');
+	$("#errorMessage").html("<b>"contours.size()+" objects found</b>");
+
+
+	src.delete();
+	dst.delete();
+	dst2.delete();
+	disp.delete();
+});
+
+utils.loadOpenCv(() => {
+    tryIt.removeAttribute('disabled');
+	calcHistogram('canvasInput','chartContainer');
+});
+</script>
+</body>
+</html>
