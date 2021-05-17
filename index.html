@@ -37,8 +37,8 @@
 					<li><b><a href="https://docs.opencv.org/3.4/dd/d6a/tutorial_js_filtering.html" target ="blank">Flou (Median Blur)</a></b> : afin d'atténuer les variations colorimétriques dans l'image</li>
 					<li><b><a href="https://docs.opencv.org/3.4/d7/dd0/tutorial_js_thresholding.html" target="blank">Binarisation 1</a></b> : pour réaliser une première distinction entre les objets et le fonds</li>
 					<li><b><a href="https://docs.opencv.org/3.4/d7/d1b/group__imgproc__misc.html#gaa9e58d2860d4afa658ef70a9b1115576" target="blank">Binarisation 2</a></b> : permet d'éliminer les faux positifs restant de la première opération</li>
-					<li><b><a href="" target="blank">Erosion</a></b>: apurer l'image obtenue pour faire ressortir les noyaux</li>
-					<li><b><a href="" target="blank">Détection de contours</a></b>: opération finale qui va compter les noyaux dans l'image obtenue</li>
+					<li><b><a href="https://docs.opencv.org/3.4/d4/d76/tutorial_js_morphological_ops.html" target="blank">Erosion</a></b>: apurer l'image obtenue pour faire ressortir les noyaux</li>
+					<li><b><a href="https://docs.opencv.org/3.4/d5/daa/tutorial_js_contours_begin.html" target="blank">Détection de contours</a></b>: opération finale qui va compter les noyaux dans l'image obtenue</li>
 				</ol>
 			</p>
 		</div>
@@ -57,9 +57,10 @@
 				Points importants : 
 				<ol>
 					<li>le code réalise un redimensionnement de votre image, cela peut affecter les performances</li>
+					<li>le rayon de flou doit être impair</li>
 					<li>la premiere passe de seuil est une opération du type THRESH_BINARY</li>
 					<li>la seconde passe de seuil est une opération du type THRESH_BINARY_INV</li>
-					<li>c'est la différence de couleur entre deux ensembles qui pilote l'opération de contour</li>
+					<li>c'est la différence de couleur entre deux ensembles qui pilotera l'opération de contour</li>
 				</ol>
 			</p>
 			
@@ -75,7 +76,7 @@
 		<h3> Parameters </h3>
 		<div class="col-sm">
 			<input type="file" id="fileInput" name="file" accept="image/*" /><br/>
-			<label>Rayon du flou</label><input id="T1bRay" type="number" value="18"/><br/>
+			<label>Rayon du flou</label><input id="T1bRay" type="number" value="5"/><br/>
 			<label>Seuil T1</label><input id="T1vMin" type="number" value="127"/><br/>
 			<label>vCible T1</label><input id="T1vMax" type="number" value="255"/><br/>
 		</div>
