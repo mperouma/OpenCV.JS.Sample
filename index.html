@@ -58,8 +58,9 @@
 				<ol>
 					<li>le code réalise un redimensionnement de votre image, cela peut affecter les performances</li>
 					<li>le rayon de flou doit être impair</li>
-					<li>la premiere passe de seuil est une opération du type THRESH_BINARY</li>
+					<li>la premiere passe de seuil est une opération du type THRESH_TOZERO</li>
 					<li>la seconde passe de seuil est une opération du type THRESH_BINARY_INV</li>
+					<li>l'érosion va grignoter les parties blanches de l'image</li>
 					<li>c'est la différence de couleur entre deux ensembles qui pilotera l'opération de contour</li>
 				</ol>
 			</p>
@@ -78,7 +79,7 @@
 			<input type="file" id="fileInput" name="file" accept="image/*" /><br/>
 			<label>Rayon du flou</label><input id="T1bRay" type="number" value="5"/><br/>
 			<label>Seuil T1</label><input id="T1vMin" type="number" value="127"/><br/>
-			<label>vCible T1</label><input id="T1vMax" type="number" value="255"/><br/>
+			<!--<label>vCible T1</label><input id="T1vMax" type="number" value="255"/><br/>-->
 		</div>
 		<div class="col-sm">
 			<label>Taille erosion</label><input id="T2erode" type="number" value="6"/><br/>
@@ -211,7 +212,8 @@ tryIt.addEventListener('click', () => {
 	cv.medianBlur(src,src,parseInt($("#T1bRay").val()));
 	cv.cvtColor(src, dst2, cv.COLOR_RGBA2GRAY);
 	//1-Binarize
-	cv.threshold(src, dst, parseInt($("#T1vMin").val()), parseInt($("#T1vMax").val()), cv.THRESH_BINARY);
+	//cv.threshold(src, dst, parseInt($("#T1vMin").val()), parseInt($("#T1vMax").val()), cv.THRESH_BINARY);
+	cv.threshold(src, dst, parseInt($("#T1vMin").val()), 255, cv.THRESH_TOZERO);
 	//Blurr image 
 	cv.medianBlur(dst,dst,parseInt($("#T1bRay").val()));
 	//To levels of gray
@@ -224,7 +226,7 @@ tryIt.addEventListener('click', () => {
 	//1.2-Binarize2
 	cv.threshold(dst, dst, parseInt($("#T2vMin").val()), parseInt($("#T2vMax").val()), cv.THRESH_BINARY_INV);
 	//ERODE
-	cv.erode(dst, dst, E, anchor, 1, cv.BORDER_CONSTANT, cv.morphologyDefaultBorderValue());
+	cv.erode(dst, dst, E, anchor, 2, cv.BORDER_CONSTANT, cv.morphologyDefaultBorderValue());
 
 	cv.resize(dst,disp,dsize,0,0,cv.INTER_AREA);
 	cv.imshow('step2', disp);
