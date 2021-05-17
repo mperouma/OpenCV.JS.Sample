@@ -18,38 +18,51 @@
 
 </head>
 <body>
-<h2>How to count objects inside a given picture using OpenCV</h2>
+<h2>Compter des objets dans une image en utilisant OpenCV</h2>
 <div class="container">
 	<div class="row">
 		<div class="col-sm">
-			<h3>Principle</h3>
-			<p>The main goal of this code sample is to demonstrate that it is possible to realise quite accurately and only by exploiting the intrinsic properties of a picture to isolate and to count shapes
-			inside of it. It relies on the <a href="https://opencv.org/" target="_blank">OpenCV</a> library.</p>
-			<p>Keep in mind that this sample will perform quite well in mainly two environments:
+			<h3>Principe</h3>
+			<p>L'objectif de ce sample est de montrer qu'il est possible, dans certains cas, d'isoler et de compter simplement des objets dans une image.
+				Il s'appuie sur la librairie <a href="https://opencv.org/" target="_blank">OpenCV</a>, une référence en vision par ordinateur.</p>
+			<p>Cependant, gardez à l'esprit que la technique utilisée ici ne fonctionnera principalement qu'aux conditions suivantes:
 				<ol>
-					<li>the background of the picture is homogeneous</li>
-					<li>the color of the objects that need to be counted is homogeneous</li>
+					<li>le fonds de l'image est globalement homogène</li>
+					<li>la couleur des objets à reconnaitre est globalement homogène</li>
+					<li>la différence de gradient est suffisamment importante entre les objets à reconnaitre et le fonds de l'image</li>
+				</ol>
+			</p>
+			<p>Le code exécuté dans cette page réalise les opérations suivantes:
+				<ol> 
+					<li><b><a href="https://docs.opencv.org/3.4/dd/d6a/tutorial_js_filtering.html" target ="blank">Flou (Median Blur)</a></b> : afin d'atténuer les variations colorimétriques dans l'image</li>
+					<li><b><a href="https://docs.opencv.org/3.4/d7/dd0/tutorial_js_thresholding.html" target="blank">Binarisation 1</a></b> : pour réaliser une première distinction entre les objets et le fonds</li>
+					<li><b><a href="https://docs.opencv.org/3.4/d7/d1b/group__imgproc__misc.html#gaa9e58d2860d4afa658ef70a9b1115576" target="blank">Binarisation 2</a></b> : permet d'éliminer les faux positifs restant de la première opération</li>
+					<li><b><a href="" target="blank">Erosion</a></b>: apurer l'image obtenue pour faire ressortir les noyaux</li>
+					<li><b><a href="" target="blank">Détection de contours</a></b>: opération finale qui va compter les noyaux dans l'image obtenue</li>
 				</ol>
 			</p>
 		</div>
 		<div class="col-sm">
-			<p>As a matter of fact, this code performs the following operations
-				<ol> 
-					<li><b>Image blur</b> : to attenuate colorimetric variations inside the image</li>
-					<li><b>First threshold operation</b> : to perform a first separation between the objects that need to be counted and the background</li>
-					<li><b>Second threshold operation</b> : to remove artefacts from the first binarisation and focus on the objects required</li>
-					<li><b>Erosion</b>: to remove from the image objects underneath a certain size</li>
-					<li><b>Contour detection</b>: final operation to identify and count shapes within the image</li>
+			
+			<p>
+				Une fois votre image chargée (l'exemple vous permet de voir l'effet de chaque valeur) vous pourrez modifier des paramètres pour tester le code et
+				ajuster le résultat suivant:
+				<ol>
+				<li>la couleur des objets à reconnaitre</li>
+				<li>la taille du flou initial</li>
+				<li>les paramètres de seuil</li>
 				</ol>
 			</p>
 			<p>
-				Once your sample image is loaded, you can test the correct settings depending on
+				Points importants : 
 				<ol>
-				<li>the color of the objects you want to count and the color of the background</li>
-				<li>the matrix size used to perform the blur</li>
-				<li>the threshold parameters</li>
+					<li>le code réalise un redimensionnement de votre image, cela peut affecter les performances</li>
+					<li>la premiere passe de seuil est une opération du type THRESH_BINARY</li>
+					<li>la seconde passe de seuil est une opération du type THRESH_BINARY_INV</li>
+					<li>c'est la différence de couleur entre deux ensembles qui pilote l'opération de contour</li>
 				</ol>
 			</p>
+			
 		</div>
 	</div>
 	<div class="row">
@@ -62,16 +75,16 @@
 		<h3> Parameters </h3>
 		<div class="col-sm">
 			<input type="file" id="fileInput" name="file" accept="image/*" /><br/>
-			<label>T1 bRay</label><input id="T1bRay" type="number" value="11"/><br/>
-			<label>T1 vMin</label><input id="T1vMin" type="number" value="135"/><br/>
-			<label>T1 vMax</label><input id="T1vMax" type="number" value="255"/><br/>
+			<label>Rayon du flou</label><input id="T1bRay" type="number" value="11"/><br/>
+			<label>Seuil T1</label><input id="T1vMin" type="number" value="135"/><br/>
+			<label>vCible T1</label><input id="T1vMax" type="number" value="255"/><br/>
 		</div>
 		<div class="col-sm">
-			<label>T2 erosion</label><input id="T2erode" type="number" value="10"/><br/>
-			<label>T2 vMin</label><input id="T2vMin" type="number" value="180"/><br/>
-			<label>T2 vMax</label><input id="T2vMax" type="number" value="255"/><br/>
+			<label>Taille erosion</label><input id="T2erode" type="number" value="10"/><br/>
+			<label>Seuil T2</label><input id="T2vMin" type="number" value="180"/><br/>
+			<label>vClible T2</label><input id="T2vMax" type="number" value="255"/><br/>
 
-			<button id="tryIt" disabled> Lauch recognition </button><br/><br/>
+			<button id="tryIt" disabled> Lancer la reco </button><br/><br/>
 			<!--<label>tMethod</label><input id="bRay" type="number" /><br/>-->
 			
 		</div>
@@ -188,6 +201,7 @@ tryIt.addEventListener('click', () => {
 	let anchor = new cv.Point(-1, -1);
 	
 	cv.resize(src,disp,dsize,0,0,cv.INTER_AREA);
+	cv.cvtColor(disp, disp, cv.COLOR_RGBA2GRAY);
 	cv.imshow('canvasInput', disp);
 	cv.cvtColor(src, dst2, cv.COLOR_RGBA2GRAY);
 
@@ -196,7 +210,7 @@ tryIt.addEventListener('click', () => {
 	cv.medianBlur(src,src,parseInt($("#T1bRay").val()));
 	cv.cvtColor(src, dst2, cv.COLOR_RGBA2GRAY);
 	//1-Binarize
-	cv.threshold(src, dst, parseInt($("#T1vMin").val()), parseInt($("#T1vMax").val()), cv.THRESH_BINARY_INV);
+	cv.threshold(src, dst, parseInt($("#T1vMin").val()), parseInt($("#T1vMax").val()), cv.THRESH_BINARY);
 	//Blurr image 
 	cv.medianBlur(dst,dst,parseInt($("#T1bRay").val()));
 	//To levels of gray
@@ -207,7 +221,7 @@ tryIt.addEventListener('click', () => {
 	calcHistogram('step1','histo1');
 
 	//1.2-Binarize2
-	cv.threshold(dst, dst, parseInt($("#T2vMin").val()), parseInt($("#T2vMax").val()), cv.THRESH_TOZERO_INV);
+	cv.threshold(dst, dst, parseInt($("#T2vMin").val()), parseInt($("#T2vMax").val()), cv.THRESH_BINARY_INV);
 	//ERODE
 	cv.erode(dst, dst, E, anchor, 1, cv.BORDER_CONSTANT, cv.morphologyDefaultBorderValue());
 
