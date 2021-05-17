@@ -240,7 +240,7 @@ tryIt.addEventListener('click', () => {
 	cv.resize(dst2,disp,dsize,0,0,cv.INTER_AREA);
 	cv.imshow('step3', disp);
 	calcHistogram('step3','histo3');
-	$("#errorMessage").html("<b>"contours.size()+" objects found</b>");
+	$("#errorMessage").html("<h3>"+contours.size()+" objets trouvés</h3>");
 
 
 	src.delete();
